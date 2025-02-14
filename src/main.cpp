@@ -4,10 +4,11 @@
 #include "../rapidjson/document.h"
 #include "../rapidjson/filereadstream.h"
 #include "problem.hpp"
+#include "optimization.hpp"
 
 int main() {
     // Load the problem
-    FILE* fp = fopen("input/A_04.json", "r");
+    FILE* fp = fopen("input/A_01.json", "r");
 
     if (!fp) {
         std::cerr << "Error: Could not open file." << std::endl;
@@ -15,8 +16,7 @@ int main() {
     }
 
     char readBuffer[65536];
-    rapidjson::FileReadStream is(fp, readBuffer,
-        sizeof(readBuffer));
+    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
 
     rapidjson::Document doc;
     doc.ParseStream(is);
@@ -29,6 +29,11 @@ int main() {
     }
 
     Problem problem = Problem(&doc);
+
+    // Optimization Step
+    Optimization optimization = Optimization(&problem);
+
+    vector<pair<string, int>> solution = optimization.OptimizationStep();
 
     return 0;
 }
