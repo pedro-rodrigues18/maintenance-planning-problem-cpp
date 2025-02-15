@@ -1,17 +1,84 @@
-#include "optimization.hpp"
 #include <algorithm>
 #include <vector>
 #include <iterator>
 #include <cmath>
 #include <iostream>
+#include <chrono>
+#include "optimization.hpp"
+#include "de.hpp"
 
 Optimization::Optimization(Problem* problem) {
     this->problem = problem;
 }
 
 vector<pair<string, int>> Optimization::OptimizationStep() {
-    cout << "Optimization step" << endl;
-    return vector<pair<string, int>>();
+
+    // ------ Differential Evolution ------
+    vector<pair<int, int>> bounds = CreateBounds(this->problem->interventions);
+
+    vector<vector<int>> population = Optimization::GeneratePopulation(this->problem->interventions.size(), bounds);
+
+    vector<float> penalties;
+    penalties.reserve(population.size());
+    for (const auto& individual : population) {
+        auto [violated, penalty] = this->ConstraintSatisfied(individual);
+        penalties.push_back(penalty);
+    }
+
+    vector<float> fitness;
+    fitness.reserve(population.size());
+    for (const auto& individual : population) {
+        auto [objective, mean_risk, expected_excess] = this->ObjectiveFunction(individual, penalties[&individual - &population[0]]);
+        fitness.push_back(objective);
+    }
+
+    DifferentialEvolution de(
+        [this](vector<int> start_times, float penalty) { return this->ObjectiveFunction(start_times, penalty); },
+        [this](vector<int> start_times) { return this->ConstraintSatisfied(start_times); },
+        [this](size_t interventions_size, vector<pair<int, int>> bounds) { return GeneratePopulation(interventions_size, bounds); },
+        population,
+        fitness,
+        bounds
+    );
+
+    vector<int> best_solution = de.Optimize();
+
+    vector<pair<string, int>> solution;
+    for (size_t i = 0; i < best_solution.size(); i++) {
+        solution.push_back(make_pair(this->problem->interventions[i].name, best_solution[i]));
+    }
+
+    return solution;
+}
+
+vector<vector<int>> Optimization::GeneratePopulation(size_t interventions_size, vector<pair<int, int>> bounds) {
+    vector<vector<int>> population;
+    int population_size = 50;
+
+    for (int i = 0; i < population_size; i++) {
+        vector<int> individual;
+        for (size_t j = 0; j < interventions_size; j++) {
+            individual.push_back(rand() % (bounds[j].second - bounds[j].first + 1) + bounds[j].first);
+        }
+        population.push_back(individual);
+    }
+    return population;
+}
+
+vector<pair<int, int>> Optimization::CreateBounds(vector<Intervention> interventions) {
+    vector<pair<int, int>> bounds;
+
+    for (const auto& intervention : interventions) {
+        bounds.emplace_back(1, intervention.tmax);
+    }
+
+    return bounds;
+}
+
+void Optimization::PrintSolution(vector<pair<string, int>> solution) {
+    for (const auto& [name, start_time] : solution) {
+        cout << name << ": " << start_time << endl;
+    }
 }
 
 tuple<float, float, float> Optimization::ObjectiveFunction(vector<int> start_times, float penalty) {
@@ -20,7 +87,7 @@ tuple<float, float, float> Optimization::ObjectiveFunction(vector<int> start_tim
     float mean_risk = 0.0;
     float expected_excess = 0.0;
 
-    for (int t = 0; t < this->problem->time_steps; t++) {
+    for (int t = 1; t < this->problem->time_steps + 1; t++) {
         float risk_t = 0.0;
         vector<float> risk_by_scenario;
 
@@ -56,8 +123,7 @@ tuple<float, float, float> Optimization::ObjectiveFunction(vector<int> start_tim
 
         float excess_t = 0.0;
         if (!risk_by_scenario.empty()) {
-            int quantile_index = ceil(quantile * risk_by_scenario.size()) - 1;
-            quantile_index = max(0, min(quantile_index, (int)risk_by_scenario.size() - 1));
+            int quantile_index = int(ceil(quantile * risk_by_scenario.size())) - 1;
             excess_t = max(0.0f, risk_by_scenario[quantile_index] - risk_t);
         }
 
@@ -162,21 +228,30 @@ tuple<bool, float> Optimization::ExclusionConstraint(vector<int> start_times) {
 tuple<bool, float> Optimization::ConstraintSatisfied(vector<int> start_times) {
     float penalty = 0.0;
 
+    // cout << "Start times: ";
+    // for (const auto& i : start_times) {
+    //     cout << i << " ";
+    // }
+    // cout << endl;
+
     auto [violated, pen] = InterventionConstraint(start_times);
 
     if (violated) {
+        //cout << "Intervention constraint violated." << endl;
         penalty += pen * 1e6;
     }
 
     auto [violated2, pen2] = ResourceConstraint(start_times);
 
     if (violated2) {
+        //cout << "Resource constraint violated." << endl;
         penalty += pen2 * 1e6;
     }
 
     auto [violated3, pen3] = ExclusionConstraint(start_times);
 
     if (violated3) {
+        //cout << "Exclusion constraint violated." << endl;
         penalty += pen3 * 1e6;
     }
 

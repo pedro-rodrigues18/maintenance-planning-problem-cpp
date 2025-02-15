@@ -94,6 +94,8 @@ vector<Intervention> Problem::GetInterventions(rapidjson::Document* doc) {
 
         intervention.workload = Problem::GetWorkload(itr->value["workload"]);
         intervention.risk = Problem::GetRisk(itr->value["risk"]);
+
+        interventions.push_back(intervention);
     }
 
     return interventions;
