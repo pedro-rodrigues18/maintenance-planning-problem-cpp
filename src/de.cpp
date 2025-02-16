@@ -132,13 +132,13 @@ vector<int> DifferentialEvolution::Optimize() {
 
             // Exponential Crossover
             vector<int> trial = target;
-            size_t j = rand() % target.size();
+            size_t j = dist_index(rng) % target.size();
             size_t L = 0;
             do {
                 trial[j] = mutant[j];
                 j = (j + 1) % target.size();
                 L++;
-            } while (rand() / static_cast<float>(RAND_MAX) < this->crossover_rate && L < target.size());
+            } while (dist_index(rng) < this->crossover_rate && L < target.size());
 
             // Constraint satisfaction
             auto [violated, penalty] = this->constraint_func(trial);
@@ -155,7 +155,7 @@ vector<int> DifferentialEvolution::Optimize() {
         }
 
         float new_best_fitness = *min_element(new_fitness.begin(), new_fitness.end());
-        cout << "Best objective: " << new_best_fitness << endl;
+        //cout << "Best objective: " << new_best_fitness << endl;
 
         if (new_best_fitness < *min_element(this->fitness.begin(), this->fitness.end())) {
             iterations_without_improvement = 0;
