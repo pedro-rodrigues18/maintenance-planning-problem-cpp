@@ -10,7 +10,7 @@
 int main() {
     //auto start_time = std::chrono::high_resolution_clock::now();
 
-    string file_name = "A_09";
+    string file_name = "B_01";
 
     // Load the problem
     FILE* fp = fopen(("input/" + file_name + ".json").c_str(), "r");

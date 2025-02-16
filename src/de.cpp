@@ -98,18 +98,23 @@ vector<int> DifferentialEvolution::Optimize() {
             auto [objective, mean_risk, expected_excess] = this->objective_func(trial, penalty);
 
             if (objective < this->fitness[i]) {
-                cout << "Objective: " << objective + penalty << endl;
+                //cout << "Objective: " << objective << endl;
                 new_population.push_back(trial);
-                new_fitness.push_back(objective + penalty);
-
-                iterations_without_improvement = 0;
+                new_fitness.push_back(objective);
             }
             else {
                 new_population.push_back(this->population[i]);
                 new_fitness.push_back(this->fitness[i]);
-
-                iterations_without_improvement++;
             }
+        }
+
+        float new_best_fitness = *min_element(new_fitness.begin(), new_fitness.end());
+        cout << "Best objective: " << new_best_fitness << endl;
+        if (new_best_fitness < *min_element(this->fitness.begin(), this->fitness.end())) {
+            iterations_without_improvement = 0;
+        }
+        else {
+            iterations_without_improvement++;
         }
 
         this->population = new_population;
@@ -121,7 +126,7 @@ vector<int> DifferentialEvolution::Optimize() {
     auto [violated, penalty] = this->constraint_func(best_solution);
     auto [objective, mean_risk, expected_excess] = this->objective_func(best_solution, penalty);
 
-    cout << "Best solution found: ";
+    cout << "Solution found: ";
     for (const auto& i : best_solution) {
         std::cout << i << " ";
     }

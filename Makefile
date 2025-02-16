@@ -1,15 +1,14 @@
-CXX	    := -g++
-CXXFLAGS:= -pedantic-errors -Wall -Wextra -Werror -pthread
-LDFLAGS	:= -lstdc++ -lm 
-BUILD	:= ./build
-OBJ_DIR := $(BUILD)/objects
-APP_DIR	:= $(BUILD)/
-TARGET	:= app
-INCLUDE	:= -Iinclude/
-SRC	    := $(wildcard src/*.cpp)
+CXX      := -g++
+CXXFLAGS := -pedantic-errors -Wall -Wextra -Werror -pthread
+LDFLAGS  := -L$(GUROBI_HOME)/lib -lgurobi_c++ -lgurobi120
+BUILD    := ./build
+OBJ_DIR  := $(BUILD)/objects
+APP_DIR  := $(BUILD)/
+TARGET   := app
+INCLUDE  := -Iinclude/ -I$(GUROBI_HOME)/include
+SRC      := $(wildcard src/*.cpp)
 
-
-OBJECTS := $(SRC:%.cpp=$(OBJ_DIR)/%.o) 
+OBJECTS  := $(SRC:%.cpp=$(OBJ_DIR)/%.o) 
 
 all: build $(APP_DIR)/$(TARGET)
 
@@ -19,7 +18,7 @@ $(OBJ_DIR)/%.o: %.cpp
 	
 $(APP_DIR)/$(TARGET): $(OBJECTS)
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS) -o $(APP_DIR)/$(TARGET) $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $(APP_DIR)/$(TARGET) $(OBJECTS) $(LDFLAGS)
 	
 .PHONY:  all build clean debug release run
 

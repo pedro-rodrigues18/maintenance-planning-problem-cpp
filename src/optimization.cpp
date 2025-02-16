@@ -5,6 +5,7 @@
 #include <iostream>
 #include <chrono>
 #include "optimization.hpp"
+#include "gurobi.hpp"
 #include "de.hpp"
 
 Optimization::Optimization(Problem* problem) {
@@ -12,11 +13,23 @@ Optimization::Optimization(Problem* problem) {
 }
 
 vector<pair<string, int>> Optimization::OptimizationStep() {
+    // ------ Gurobi ------
+    Gurobi gb(this->problem);
+
+    vector<int> gurobi_solution = gb.Optimize();
+
+    cout << "Gurobi solution: ";
+    for (const auto& i : gurobi_solution) {
+        cout << i << " ";
+    }
+    cout << endl;
 
     // ------ Differential Evolution ------
     vector<pair<int, int>> bounds = CreateBounds(this->problem->interventions);
 
     vector<vector<int>> population = Optimization::GeneratePopulation(this->problem->interventions.size(), bounds);
+
+    population[0] = gurobi_solution;
 
     vector<float> penalties;
     penalties.reserve(population.size());
@@ -53,9 +66,8 @@ vector<pair<string, int>> Optimization::OptimizationStep() {
 
 vector<vector<int>> Optimization::GeneratePopulation(size_t interventions_size, vector<pair<int, int>> bounds) {
     vector<vector<int>> population;
-    int population_size = 50;
 
-    for (int i = 0; i < population_size; i++) {
+    for (int i = 0; i < this->population_size; i++) {
         vector<int> individual;
         for (size_t j = 0; j < interventions_size; j++) {
             individual.push_back(rand() % (bounds[j].second - bounds[j].first + 1) + bounds[j].first);

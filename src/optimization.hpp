@@ -3,11 +3,12 @@
 
 #include "problem.hpp"
 
-const double TIME_LIMIT = 60.0 * 1.0;
+const double TIME_LIMIT = 60.0 * 15.0;
 
 class Optimization {
 public:
     Problem* problem;
+    int population_size = 10;
 
     Optimization(Problem* problem);
 
