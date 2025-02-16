@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <random>
+#include <omp.h>
 
 DifferentialEvolution::DifferentialEvolution(
     ObjectiveFunc objective_func,
@@ -27,7 +28,8 @@ vector<int> DifferentialEvolution::Optimize() {
             break;
         }
 
-        if (iterations_without_improvement > 500) {
+        if (iterations_without_improvement > 100) {
+            cout << "Restarting population" << endl;
             // Get best individual in population
             vector<int> best_solution = this->population[distance(this->fitness.begin(), min_element(this->fitness.begin(), this->fitness.end()))];
             float best_fitness = *min_element(this->fitness.begin(), this->fitness.end());
@@ -59,16 +61,24 @@ vector<int> DifferentialEvolution::Optimize() {
         vector<vector<int>> new_population;
         vector<float> new_fitness;
 
+        new_population.resize(this->population.size());
+        new_fitness.resize(this->population.size());
+
+#pragma omp parallel for
         for (size_t i = 0; i < this->population.size(); i++) {
+            unsigned int seed = static_cast<unsigned int>(chrono::system_clock::now().time_since_epoch().count()) + omp_get_thread_num();
+            mt19937 rng(seed);
+            uniform_int_distribution<size_t> dist_index(0, this->population.size() - 1);
+            uniform_real_distribution<float> dist_real(0.0, 1.0);
+
             vector<int> target = this->population[i];
 
-            size_t x1_index = rand() % this->population.size();
-            size_t x2_index = rand() % this->population.size();
+            size_t x1_index = dist_index(rng);
+            size_t x2_index = dist_index(rng);
 
-            // Ensure that indces are different and not equal to the target
             while (x1_index == i || x2_index == i || x1_index == x2_index) {
-                x1_index = rand() % this->population.size();
-                x2_index = rand() % this->population.size();
+                x1_index = dist_index(rng);
+                x2_index = dist_index(rng);
             }
 
             vector<int> best = this->population[distance(this->fitness.begin(), min_element(this->fitness.begin(), this->fitness.end()))];
@@ -98,18 +108,18 @@ vector<int> DifferentialEvolution::Optimize() {
             auto [objective, mean_risk, expected_excess] = this->objective_func(trial, penalty);
 
             if (objective < this->fitness[i]) {
-                //cout << "Objective: " << objective << endl;
-                new_population.push_back(trial);
-                new_fitness.push_back(objective);
+                new_population[i] = trial;
+                new_fitness[i] = objective;
             }
             else {
-                new_population.push_back(this->population[i]);
-                new_fitness.push_back(this->fitness[i]);
+                new_population[i] = this->population[i];
+                new_fitness[i] = this->fitness[i];
             }
         }
 
         float new_best_fitness = *min_element(new_fitness.begin(), new_fitness.end());
         cout << "Best objective: " << new_best_fitness << endl;
+
         if (new_best_fitness < *min_element(this->fitness.begin(), this->fitness.end())) {
             iterations_without_improvement = 0;
         }
@@ -128,9 +138,9 @@ vector<int> DifferentialEvolution::Optimize() {
 
     cout << "Solution found: ";
     for (const auto& i : best_solution) {
-        std::cout << i << " ";
+        cout << i << " ";
     }
-    std::cout << endl;
+    cout << endl;
 
     cout << "Objective: " << objective << endl;
     cout << "Mean risk: " << mean_risk << endl;

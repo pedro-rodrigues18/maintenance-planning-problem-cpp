@@ -1,5 +1,5 @@
 CXX      := -g++
-CXXFLAGS := -pedantic-errors -Wall -Wextra -Werror -pthread
+CXXFLAGS := -pedantic-errors -Wall -Wextra -Werror -pthread -fopenmp
 LDFLAGS  := -L$(GUROBI_HOME)/lib -lgurobi_c++ -lgurobi120
 BUILD    := ./build
 OBJ_DIR  := $(BUILD)/objects
