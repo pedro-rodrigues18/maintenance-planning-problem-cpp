@@ -2,13 +2,14 @@
 #define OPTIMIZATION_HPP
 
 #include "problem.hpp"
+#include "gurobi.hpp"
+#include "de.hpp"
 
 const double TIME_LIMIT = 60.0 * 15.0;
 
 class Optimization {
 public:
     Problem* problem;
-    int population_size = 10;
 
     Optimization(Problem* problem);
 
@@ -21,8 +22,6 @@ private:
     tuple<bool, float> InterventionConstraint(vector<int> start_times);
     tuple<bool, float> ResourceConstraint(vector<int> start_times);
     tuple<bool, float> ExclusionConstraint(vector<int> start_times);
-    vector<pair<int, int>> CreateBounds(vector<Intervention> interventions);
-    vector<vector<int>> GeneratePopulation(size_t interventions_size, vector<pair<int, int>> bounds);
 };
 
 #endif

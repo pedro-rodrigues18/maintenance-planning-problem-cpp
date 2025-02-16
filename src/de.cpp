@@ -9,14 +9,51 @@
 DifferentialEvolution::DifferentialEvolution(
     ObjectiveFunc objective_func,
     ConstraintFunc constraint_func,
-    GeneratePopulationFunc generate_population_func,
-    vector<vector<int>> population,
-    vector<float> fitness,
-    vector<pair<int, int>> bounds)
-    : objective_func(objective_func), constraint_func(constraint_func), generate_population_func(generate_population_func) {
-    this->population = population;
-    this->fitness = fitness;
-    this->bounds = bounds;
+    Problem* problem,
+    vector<int> gurobi_solution) :
+    objective_func(objective_func), constraint_func(constraint_func), problem(problem) {
+
+    this->problem = problem;
+    this->bounds = CreateBounds(this->problem->interventions);
+    this->population = GeneratePopulation(this->problem->interventions.size());
+
+    this->population[0] = gurobi_solution;
+
+    vector<float> penalties;
+    penalties.reserve(this->population.size());
+    for (const auto& individual : this->population) {
+        auto [violated, penalty] = this->constraint_func(individual);
+        penalties.push_back(penalty);
+    }
+
+    this->fitness.reserve(this->population.size());
+    for (const auto& individual : this->population) {
+        auto [objective, mean_risk, expected_excess] = this->objective_func(individual, penalties[&individual - &population[0]]);
+        this->fitness.push_back(objective);
+    }
+}
+
+vector<vector<int>> DifferentialEvolution::GeneratePopulation(size_t interventions_size) {
+    vector<vector<int>> population;
+
+    for (int i = 0; i < this->population_size; i++) {
+        vector<int> individual;
+        for (size_t j = 0; j < interventions_size; j++) {
+            individual.push_back(rand() % (this->bounds[j].second - this->bounds[j].first + 1) + this->bounds[j].first);
+        }
+        population.push_back(individual);
+    }
+    return population;
+}
+
+vector<pair<int, int>> DifferentialEvolution::CreateBounds(vector<Intervention> interventions) {
+    vector<pair<int, int>> bounds;
+
+    for (const auto& intervention : interventions) {
+        bounds.emplace_back(1, intervention.tmax);
+    }
+
+    return bounds;
 }
 
 vector<int> DifferentialEvolution::Optimize() {
@@ -34,7 +71,7 @@ vector<int> DifferentialEvolution::Optimize() {
             vector<int> best_solution = this->population[distance(this->fitness.begin(), min_element(this->fitness.begin(), this->fitness.end()))];
             float best_fitness = *min_element(this->fitness.begin(), this->fitness.end());
 
-            this->population = this->generate_population_func(best_solution.size(), this->bounds);
+            this->population = GeneratePopulation(best_solution.size());
 
             vector<float> penalties;
             penalties.reserve(this->population.size());
@@ -148,3 +185,4 @@ vector<int> DifferentialEvolution::Optimize() {
 
     return best_solution;
 }
+
