@@ -1,20 +1,14 @@
-#include <algorithm>
-#include <vector>
-#include <iterator>
-#include <cmath>
-#include <iostream>
-#include <chrono>
 #include "optimization.hpp"
 
 Optimization::Optimization(Problem* problem) {
     this->problem = problem;
 }
 
-vector<pair<string, int>> Optimization::OptimizationStep() {
+vector<pair<string, int>> Optimization::OptimizationStep(chrono::time_point<chrono::high_resolution_clock> start_time) {
     // ------ Gurobi ------
     Gurobi gb(this->problem);
 
-    vector<int> gurobi_solution = gb.Optimize();
+    vector<int> gurobi_solution = gb.Optimize(start_time);
 
     cout << "Gurobi solution: ";
     for (const auto& i : gurobi_solution) {
@@ -22,7 +16,21 @@ vector<pair<string, int>> Optimization::OptimizationStep() {
     }
     cout << endl;
 
+    auto elapsed_time = chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now() - start_time).count();
+
+    cout << "Elapsed time: " << elapsed_time << "s" << endl;
+
+    if (elapsed_time >= TIME_LIMIT) {
+        vector<pair<string, int>> solution;
+        for (size_t i = 0; i < gurobi_solution.size(); i++) {
+            solution.push_back(make_pair(this->problem->interventions[i].name, gurobi_solution[i]));
+        }
+        return solution;
+    }
+
     // ------ Differential Evolution ------
+    cout << "Starting Differential Evolution" << endl;
+
     DifferentialEvolution de(
         [this](vector<int> start_times, float penalty) { return this->ObjectiveFunction(start_times, penalty); },
         [this](vector<int> start_times) { return this->ConstraintSatisfied(start_times); },
@@ -30,7 +38,7 @@ vector<pair<string, int>> Optimization::OptimizationStep() {
         gurobi_solution
     );
 
-    vector<int> best_solution = de.Optimize();
+    vector<int> best_solution = de.Optimize(start_time);
 
     vector<pair<string, int>> solution;
     for (size_t i = 0; i < best_solution.size(); i++) {

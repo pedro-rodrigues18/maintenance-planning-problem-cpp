@@ -3,6 +3,7 @@
 
 #include "gurobi_c++.h"
 #include "gurobi_c.h"
+#include "optimization.hpp"
 #include "problem.hpp"
 #include <map>
 #include <algorithm>
@@ -13,7 +14,7 @@ public:
 
     Gurobi(Problem* problem);
 
-    vector<int> Optimize();
+    vector<int> Optimize(chrono::time_point<chrono::high_resolution_clock> start_time);
 };
 
 #endif

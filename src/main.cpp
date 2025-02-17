@@ -8,9 +8,9 @@
 #include "optimization.hpp"
 
 int main() {
-    //auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time = std::chrono::high_resolution_clock::now();
 
-    string file_name = "A_09";
+    string file_name = "A_10";
 
     // Load the problem
     FILE* fp = fopen(("input/" + file_name + ".json").c_str(), "r");
@@ -35,10 +35,18 @@ int main() {
 
     Problem problem = Problem(&doc);
 
+    auto elapsed_time = chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now() - start_time).count();
+
+    cout << "Problem loaded successfully!" << endl;
+    cout << "Elapsed time: " << elapsed_time << "s" << endl;
+
     // Optimization Step
     Optimization optimization = Optimization(&problem);
 
-    vector<pair<string, int>> solution = optimization.OptimizationStep();
+    vector<pair<string, int>> solution = optimization.OptimizationStep(start_time);
+
+    cout << "Optimization finished!" << endl;
+    cout << "Elapsed time: " << chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now() - start_time).count() << "s" << endl;
 
     // Write solution to txt file
     ofstream output_file("output/" + file_name + ".txt");

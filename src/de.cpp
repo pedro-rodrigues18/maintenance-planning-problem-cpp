@@ -36,10 +36,14 @@ DifferentialEvolution::DifferentialEvolution(
 vector<vector<int>> DifferentialEvolution::GeneratePopulation(size_t interventions_size) {
     vector<vector<int>> population;
 
+    random_device rd;
+    mt19937 gen(rd());
+
     for (int i = 0; i < this->population_size; i++) {
         vector<int> individual;
         for (size_t j = 0; j < interventions_size; j++) {
-            individual.push_back(rand() % (this->bounds[j].second - this->bounds[j].first + 1) + this->bounds[j].first);
+            uniform_int_distribution<int> dist(this->bounds[j].first, this->bounds[j].second);
+            individual.push_back(dist(gen));
         }
         population.push_back(individual);
     }
@@ -56,18 +60,13 @@ vector<pair<int, int>> DifferentialEvolution::CreateBounds(vector<Intervention> 
     return bounds;
 }
 
-vector<int> DifferentialEvolution::Optimize() {
-    chrono::time_point<chrono::high_resolution_clock> start_time = chrono::high_resolution_clock::now();
+vector<int> DifferentialEvolution::Optimize(chrono::time_point<chrono::high_resolution_clock> start_time) {
+    auto remaining_time = TIME_LIMIT - (chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now() - start_time).count());
     int iterations_without_improvement = 0;
 
-    while (true) {
-        if (chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now() - start_time).count() > TIME_LIMIT) {
-            break;
-        }
-
+    while (remaining_time > 0) {
         if (iterations_without_improvement > 100) {
-            cout << "Restarting population" << endl;
-            // Get best individual in population
+            //cout << "Restarting population" << endl;
             vector<int> best_solution = this->population[distance(this->fitness.begin(), min_element(this->fitness.begin(), this->fitness.end()))];
             float best_fitness = *min_element(this->fitness.begin(), this->fitness.end());
 
@@ -103,7 +102,8 @@ vector<int> DifferentialEvolution::Optimize() {
 
 #pragma omp parallel for
         for (size_t i = 0; i < this->population.size(); i++) {
-            unsigned int seed = static_cast<unsigned int>(chrono::system_clock::now().time_since_epoch().count()) + omp_get_thread_num();
+            random_device rd;
+            unsigned int seed = rd() ^ (static_cast<unsigned int>(omp_get_thread_num()));
             mt19937 rng(seed);
             uniform_int_distribution<size_t> dist_index(0, this->population.size() - 1);
             uniform_real_distribution<float> dist_real(0.0, 1.0);
@@ -125,9 +125,14 @@ vector<int> DifferentialEvolution::Optimize() {
             // Mutation best/1/bin
             vector<int> mutant;
             for (size_t j = 0; j < target.size(); j++) {
-                int chromosome = best[j] + this->mutation_rate * (x1[j] - x2[j]);
-                chromosome = max(this->bounds[j].first, min(this->bounds[j].second, chromosome));
-                mutant.push_back(chromosome);
+                if (dist_real(rng) < this->mutation_rate) {
+                    int chromosome = best[j] + this->mutation_rate * (x1[j] - x2[j]);
+                    chromosome = max(this->bounds[j].first, min(this->bounds[j].second, chromosome));
+                    mutant.push_back(chromosome);
+                }
+                else {
+                    mutant.push_back(target[j]);
+                }
             }
 
             // Exponential Crossover
@@ -155,7 +160,7 @@ vector<int> DifferentialEvolution::Optimize() {
         }
 
         float new_best_fitness = *min_element(new_fitness.begin(), new_fitness.end());
-        //cout << "Best objective: " << new_best_fitness << endl;
+        cout << "Best fitness: " << setprecision(6) << new_best_fitness << fixed << "\r" << flush;
 
         if (new_best_fitness < *min_element(this->fitness.begin(), this->fitness.end())) {
             iterations_without_improvement = 0;
@@ -166,6 +171,8 @@ vector<int> DifferentialEvolution::Optimize() {
 
         this->population = new_population;
         this->fitness = new_fitness;
+
+        remaining_time = TIME_LIMIT - (chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now() - start_time).count());
     }
 
     vector<int> best_solution = this->population[distance(this->fitness.begin(), min_element(this->fitness.begin(), this->fitness.end()))];
@@ -179,9 +186,9 @@ vector<int> DifferentialEvolution::Optimize() {
     }
     cout << endl;
 
-    cout << "Objective: " << objective << endl;
-    cout << "Mean risk: " << mean_risk << endl;
-    cout << "Expected excess: " << expected_excess << endl;
+    cout << "Objective: " << setprecision(6) << objective << fixed << endl;
+    cout << "Mean risk: " << setprecision(6) << mean_risk << fixed << endl;
+    cout << "Expected excess: " << setprecision(6) << expected_excess << fixed << endl;
 
     return best_solution;
 }
