@@ -1,10 +1,15 @@
 #ifndef DIFFERENTIAL_EVOLUTION_HPP
 #define DIFFERENTIAL_EVOLUTION_HPP
 
-#include "problem.hpp"
+#include <iostream>
+#include <algorithm>
+#include <random>
 #include <chrono>
 #include <vector>
 #include <functional>
+#include <omp.h>
+#include "problem.hpp"
+#include "optimization.hpp"
 
 using namespace std;
 

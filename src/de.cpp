@@ -1,10 +1,4 @@
 #include "de.hpp"
-#include "optimization.hpp"
-#include <chrono>
-#include <iostream>
-#include <algorithm>
-#include <random>
-#include <omp.h>
 
 DifferentialEvolution::DifferentialEvolution(
     ObjectiveFunc objective_func,
