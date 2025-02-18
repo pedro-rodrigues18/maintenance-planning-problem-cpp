@@ -11,8 +11,9 @@
 #include "problem.hpp"
 #include "gurobi.hpp"
 #include "de.hpp"
+#include "../utils/log.hpp"
 
-const double TIME_LIMIT = 60.0 * 5.0;
+const double TIME_LIMIT = 60.0 * 15.0;
 
 class Optimization {
 public:

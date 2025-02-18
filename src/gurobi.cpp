@@ -5,6 +5,7 @@ Gurobi::Gurobi(Problem* problem) {
 }
 
 vector<int> Gurobi::Optimize(chrono::time_point<chrono::high_resolution_clock> start_time) {
+    utils::Log(this->problem->file_name, "Starting Gurobi optimization.");
     auto remaining_time = TIME_LIMIT - (chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now() - start_time).count());
     GRBEnv env = GRBEnv();
     GRBModel model = GRBModel(env);

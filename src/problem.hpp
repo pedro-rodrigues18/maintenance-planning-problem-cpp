@@ -1,6 +1,7 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -40,6 +41,7 @@ struct Exclusion {
 
 class Problem {
 public:
+    string file_name;
     vector<Resource> resources;
     vector<Intervention> interventions;
     vector<Exclusion> exclusions;
@@ -49,7 +51,7 @@ public:
     float alpha;
     float computation_time;
 
-    Problem(rapidjson::Document* doc);
+    Problem(rapidjson::Document* doc, string file_name);
 
 private:
     vector<Resource> GetResources(rapidjson::Document* doc);

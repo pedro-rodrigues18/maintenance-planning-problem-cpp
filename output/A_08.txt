@@ -13,6 +13,6 @@ Intervention_315 16
 Intervention_356 3
 Intervention_535 17
 Intervention_595 5
-Intervention_592 16
+Intervention_592 15
 Intervention_536 11
 Intervention_150 3

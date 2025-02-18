@@ -5,22 +5,34 @@ Optimization::Optimization(Problem* problem) {
 }
 
 vector<pair<string, int>> Optimization::OptimizationStep(chrono::time_point<chrono::high_resolution_clock> start_time) {
+    utils::Log(this->problem->file_name, "Starting optimization step.");
+
     // ------ Gurobi ------
     Gurobi gb(this->problem);
 
     vector<int> gurobi_solution = gb.Optimize(start_time);
+    auto [gb_violated, gb_penalty] = ConstraintSatisfied(gurobi_solution);
+    auto [gb_objective, gb_mean_risk, gb_expected_excess] = ObjectiveFunction(gurobi_solution, gb_penalty);
 
-    cout << "Gurobi solution: ";
-    for (const auto& i : gurobi_solution) {
-        cout << i << " ";
+    ostringstream oss;
+    oss << "[";
+    for (size_t j = 0; j < gurobi_solution.size(); ++j) {
+        oss << gurobi_solution[j];
+        if (j < gurobi_solution.size() - 1) oss << ", ";
     }
-    cout << endl;
+    oss << "]";
 
-    auto elapsed_time = chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now() - start_time).count();
+    utils::Log(this->problem->file_name, "Gurobi solution: " + oss.str());
+    utils::Log(this->problem->file_name, "Gurobi mean risk: " + to_string(gb_mean_risk));
+    utils::Log(this->problem->file_name, "Gurobi expected excess: " + to_string(gb_expected_excess));
+    utils::Log(this->problem->file_name, "Gurobi objective: " + to_string(gb_objective));
 
-    cout << "Elapsed time: " << elapsed_time << "s" << endl;
+    auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start_time).count();
 
-    if (elapsed_time >= TIME_LIMIT) {
+    utils::Log(this->problem->file_name, "Elapsed time: " + to_string(elapsed_time) + "ms");
+
+    if ((elapsed_time / 1000.0) >= TIME_LIMIT) {
+        utils::Log(this->problem->file_name, "Time limit reached. Returning Gurobi solution.");
         vector<pair<string, int>> solution;
         for (size_t i = 0; i < gurobi_solution.size(); i++) {
             solution.push_back(make_pair(this->problem->interventions[i].name, gurobi_solution[i]));
@@ -29,7 +41,7 @@ vector<pair<string, int>> Optimization::OptimizationStep(chrono::time_point<chro
     }
 
     // ------ Differential Evolution ------
-    cout << "Starting Differential Evolution" << endl;
+    utils::Log(this->problem->file_name, "Starting Differential Evolution.");
 
     DifferentialEvolution de(
         [this](vector<int> start_times, float penalty) { return this->ObjectiveFunction(start_times, penalty); },

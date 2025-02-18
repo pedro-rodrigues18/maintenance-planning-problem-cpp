@@ -1,11 +1,9 @@
-#include <iostream>
-#include <unordered_map>
 #include "problem.hpp"
-#include "../rapidjson/document.h"
 
 using namespace std;
 
-Problem::Problem(rapidjson::Document* doc) {
+Problem::Problem(rapidjson::Document* doc, string file_name) {
+    this->file_name = file_name;
     this->resources = GetResources(doc);
     this->interventions = GetInterventions(doc);
     this->exclusions = GetExclusions(doc);

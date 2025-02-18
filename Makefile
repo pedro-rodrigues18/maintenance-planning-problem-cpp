@@ -6,7 +6,7 @@ OBJ_DIR  := $(BUILD)/objects
 APP_DIR  := $(BUILD)/
 TARGET   := app
 INCLUDE  := -Iinclude/ -I$(GUROBI_HOME)/include
-SRC      := $(wildcard src/*.cpp)
+SRC      := $(wildcard src/*.cpp) $(wildcard utils/*.cpp)
 
 OBJECTS  := $(SRC:%.cpp=$(OBJ_DIR)/%.o) 
 

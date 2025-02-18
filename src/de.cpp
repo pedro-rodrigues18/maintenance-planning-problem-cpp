@@ -180,15 +180,18 @@ vector<int> DifferentialEvolution::Optimize(chrono::time_point<chrono::high_reso
     auto [violated, penalty] = this->constraint_func(best_solution);
     auto [objective, mean_risk, expected_excess] = this->objective_func(best_solution, penalty);
 
-    cout << "Solution found: ";
-    for (const auto& i : best_solution) {
-        cout << i << " ";
+    ostringstream oss;
+    oss << "[";
+    for (size_t j = 0; j < best_solution.size(); ++j) {
+        oss << best_solution[j];
+        if (j < best_solution.size() - 1) oss << ", ";
     }
-    cout << endl;
+    oss << "]";
 
-    cout << "Objective: " << setprecision(6) << objective << fixed << endl;
-    cout << "Mean risk: " << setprecision(6) << mean_risk << fixed << endl;
-    cout << "Expected excess: " << setprecision(6) << expected_excess << fixed << endl;
+    utils::Log(this->problem->file_name, "DE solution: " + oss.str());
+    utils::Log(this->problem->file_name, "Mean risk: " + to_string(mean_risk));
+    utils::Log(this->problem->file_name, "Expected excess: " + to_string(expected_excess));
+    utils::Log(this->problem->file_name, "Objective: " + to_string(objective));
 
     return best_solution;
 }
