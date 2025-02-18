@@ -122,7 +122,7 @@ vector<int> DifferentialEvolution::Optimize(chrono::time_point<chrono::high_reso
             vector<int> x1 = this->population[x1_index];
             vector<int> x2 = this->population[x2_index];
 
-            // Mutation best/1/bin
+            // Mutation (/best/1)
             vector<int> mutant;
             for (size_t j = 0; j < target.size(); j++) {
                 if (dist_real(rng) < this->mutation_rate) {
@@ -135,7 +135,7 @@ vector<int> DifferentialEvolution::Optimize(chrono::time_point<chrono::high_reso
                 }
             }
 
-            // Exponential Crossover
+            // Exponential Crossover (/exp)
             vector<int> trial = target;
             size_t j = dist_index(rng) % target.size();
             size_t L = 0;
