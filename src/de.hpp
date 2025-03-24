@@ -22,13 +22,13 @@ public:
     ConstraintFunc constraint_func;
     Problem* problem;
     vector<vector<int>> population;
-    int population_size = 50;
+    int population_size = 10;
     vector<float> fitness;
     vector<pair<int, int>> bounds;
     float mutation_rate = 0.6235;
     float crossover_rate = 0.5763;
 
-    DifferentialEvolution(ObjectiveFunc objective_func, ConstraintFunc constraint_func, Problem* problem, vector<int> gurobi_solution);
+    DifferentialEvolution(ObjectiveFunc objective_func, ConstraintFunc constraint_func, Problem* problem, int population_size, vector<int> gurobi_solution);
 
     vector<int> Optimize(chrono::time_point<chrono::high_resolution_clock> start_time);
 

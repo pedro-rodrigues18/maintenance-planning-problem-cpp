@@ -71,6 +71,7 @@ void MakeOptimization(std::string instance) {
 }
 
 void RunAllInstances(std::vector<std::string> instances) {
+    sort(instances.begin(), instances.end());
     for (const auto& instance : instances) {
         MakeOptimization(instance);
     }

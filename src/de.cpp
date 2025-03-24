@@ -4,9 +4,10 @@ DifferentialEvolution::DifferentialEvolution(
     ObjectiveFunc objective_func,
     ConstraintFunc constraint_func,
     Problem* problem,
+    int population_size,
     vector<int> gurobi_solution) :
     objective_func(objective_func), constraint_func(constraint_func), problem(problem) {
-
+    this->population_size = population_size;
     this->problem = problem;
     this->bounds = CreateBounds(this->problem->interventions);
     this->population = GeneratePopulation(this->problem->interventions.size());

@@ -41,20 +41,34 @@ vector<pair<string, int>> Optimization::OptimizationStep(chrono::time_point<chro
     }
 
     // ------ Differential Evolution ------
-    utils::Log(this->problem->file_name, "Starting Differential Evolution.");
-
-    DifferentialEvolution de(
-        [this](vector<int> start_times, float penalty) { return this->ObjectiveFunction(start_times, penalty); },
-        [this](vector<int> start_times) { return this->ConstraintSatisfied(start_times); },
-        this->problem,
-        gurobi_solution
-    );
-
-    vector<int> best_solution = de.Optimize(start_time);
-
+    utils::Log(this->problem->file_name, "\nStarting Differential Evolution.");
     vector<pair<string, int>> solution;
-    for (size_t i = 0; i < best_solution.size(); i++) {
-        solution.push_back(make_pair(this->problem->interventions[i].name, best_solution[i]));
+    vector<int> populations = { 10, 20, 30 };
+    int number_iterations = 20;
+
+    for (size_t i = 0; i < populations.size(); i++) {
+        utils::Log(this->problem->file_name, "\nPopulation size: " + to_string(populations[i]));
+        for (int j = 0; j < number_iterations; j++) {
+            utils::Log(this->problem->file_name, "\nIteration: " + to_string(j + 1) + "/" + to_string(number_iterations));
+            utils::Log(this->problem->file_name, "");
+
+            solution = std::vector<pair<string, int>>();
+            start_time = std::chrono::high_resolution_clock::now();
+
+            DifferentialEvolution de(
+                [this](vector<int> start_times, float penalty) { return this->ObjectiveFunction(start_times, penalty); },
+                [this](vector<int> start_times) { return this->ConstraintSatisfied(start_times); },
+                this->problem,
+                populations[i],
+                gurobi_solution
+            );
+
+            vector<int> best_solution = de.Optimize(start_time);
+
+            for (size_t k = 0; k < best_solution.size(); k++) {
+                solution.push_back(make_pair(this->problem->interventions[k].name, best_solution[k]));
+            }
+        }
     }
 
     return solution;

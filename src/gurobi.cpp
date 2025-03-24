@@ -5,12 +5,18 @@ Gurobi::Gurobi(Problem* problem) {
 }
 
 vector<int> Gurobi::Optimize(chrono::time_point<chrono::high_resolution_clock> start_time) {
-    utils::Log(this->problem->file_name, "Starting Gurobi optimization.");
+    utils::Log(this->problem->file_name, "\nStarting Gurobi optimization.\n");
     auto remaining_time = TIME_LIMIT - (chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now() - start_time).count());
     GRBEnv env = GRBEnv();
     GRBModel model = GRBModel(env);
-    model.set(GRB_IntParam_MIPFocus, 1);
+
     model.set(GRB_DoubleParam_TimeLimit, remaining_time);
+    model.set(GRB_IntParam_OutputFlag, 0);
+    model.set(GRB_DoubleParam_MIPGap, 0.00);
+    model.set(GRB_IntParam_MIPFocus, 1);  // Prioritize finding feasible solutions
+    model.set(GRB_IntParam_Presolve, 1);  // 1 - conservative, 0 - off, 2 - aggressive
+    model.set(GRB_IntParam_PrePasses, 1);  // to not spend too much time in pre-solve
+    model.set(GRB_IntParam_Method, 1);
 
     // Create variable
     map<int, map<int, GRBVar>> x;
